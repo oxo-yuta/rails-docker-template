@@ -1,33 +1,17 @@
 FROM ruby:2.5
-
-ENV LANG C.UTF-8
-ENV WORKSPACE=/usr/local/src
-
-# install bundler.
-RUN apt-get update && \
-    apt-get install -y vim less && \
-    apt-get install -y build-essential libpq-dev nodejs && \
-    gem install bundler && \
-    apt-get clean && \
-    rm -r /var/lib/apt/lists/*
-
-# create user and group.
-RUN groupadd -r --gid 1000 rails && \
-    useradd -m -r --uid 1000 --gid 1000 rails
-
-# create directory.
-RUN mkdir -p $WORKSPACE $BUNDLE_APP_CONFIG && \
-    chown -R rails:rails $WORKSPACE && \
-    chown -R rails:rails $BUNDLE_APP_CONFIG
-
-USER rails
-WORKDIR $WORKSPACE
-
-# install ruby on rails.
-ADD --chown=rails:rails src $WORKSPACE
+RUN apt-get update -qq && apt-get install -y nodejs postgresql-client
+RUN mkdir /myapp
+WORKDIR /myapp
+COPY Gemfile /myapp/Gemfile
+COPY Gemfile.lock /myapp/Gemfile.lock
 RUN bundle install
+COPY . /myapp
 
+# Add a script to be executed every time the container starts.
+COPY entrypoint.sh /usr/bin/
+RUN chmod +x /usr/bin/entrypoint.sh
+ENTRYPOINT ["entrypoint.sh"]
+EXPOSE 3000
 
-## comment in this block after run rails new
-# EXPOSE  3000
-# CMD ["rails", "server", "-b", "0.0.0.0"]
+# Start the main process.
+CMD ["rails", "server", "-b", "0.0.0.0"]

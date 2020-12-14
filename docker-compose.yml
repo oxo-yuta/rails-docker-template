@@ -1,38 +1,20 @@
-version: '2'
+version: '3'
 services:
-  rails:
+  db:
+    image: postgres
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgresql-data:/var/lib/postgresql/data
+  web:
     build: .
-    image: my/rails5.2
-    container_name: 'rails'
-    ports:
-      - "80:3000"
-    environment:
-      APP_DATABASE: 'example'
-      APP_DATABASE_USER: 'app'
-      APP_DATABASE_PASSWORD: 'development'
+    command: bash -c "rm -f tmp/pids/server.pid && bundle exec rails s -p 3000 -b '0.0.0.0'"
     volumes:
-      - rails-data:/usr/local/src
+      - .:/myapp
+    ports:
+      - "3000:3000"
     depends_on:
-      - mysql
-
-  mysql:
-    image: mysql:5.7
-    container_name: 'mysql'
-    environment:
-      MYSQL_ROOT_PASSWORD: 'mysql'
-      MYSQL_DATABASE: 'example'
-      MYSQL_USER: 'app'
-      MYSQL_PASSWORD: 'development'
-    ports:
-      - '3306:3306'
-    volumes:
-      - mysql-data:/var/lib/mysql
-
+      - db
 volumes:
-  rails-data:
-    driver_opts:
-      type: none
-      device: ${PWD}/src/
-      o: bind
-  mysql-data:
+  postgresql-data:
     driver: local
